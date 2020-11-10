@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="artemis-amqp-protocol-2.15.0">
+    <CLASSES>
+      <root url="file://D:/_dev_runtime/apache-artemis-2.15.0/lib" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <jarDirectory url="file://D:/_dev_runtime/apache-artemis-2.15.0/lib" recursive="false" />
+  </library>
+</component>
