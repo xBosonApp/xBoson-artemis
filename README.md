@@ -36,8 +36,10 @@ https://activemq.apache.org/components/artemis/documentation/latest/mqtt.html
 mqtt 主题前缀:
 
 * /场景id/产品id/设备id
-  * /data 数据
-  * /alert 报警
+  * /data 数据, 任意类型
+  * /alert 报警, 报警格式
+  * /state 状态, 字符串
+  * /meta 元数据, json
 
   
 mqtt 参数:
@@ -58,6 +60,8 @@ mqtt 参数:
 
 ## 表结构
 
+默认库 `xboson-artemis-iot`
+
 ```json
 {
   "user" : {
@@ -69,7 +73,7 @@ mqtt 参数:
   },
   
   "address" : {
-    "_id" : ". 分割的地址, 格式: '.场景id.产品id.设备id.data', 该格式来自 fmt 的转换",
+    "_id" : ". 分割的地址, 格式: '.场景id.产品id', 该格式来自 fmt 的转换",
     "fmt" : "/ 分割的地址, 原始 mqtt 地址",
     "send": {}, // 可发送数据用户 set
     "recv": {}  // 可接受数据用户 set
@@ -79,6 +83,13 @@ mqtt 参数:
     "_id" : "用户名+加密密码",
     "crt" : "登录时间",
     "bind": "绑定客户端地址"
+  },
+  
+  "device" : {
+    "_id" : "格式: '.场景id.产品id.设备id'",
+    "devid" : "设备id",
+    "state" : "状态",
+    "meta" : {}
   }
 }
 ```

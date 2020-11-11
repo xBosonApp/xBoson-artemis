@@ -64,13 +64,17 @@ public class Security implements ActiveMQSecurityManager4 {
                                     RemotingConnection remotingConnection,
                                     String securityDomain) {
     switch (checkType) {
+      case CREATE_ADDRESS:
       case SEND:
         return addr.canSend(user, address) ? user : null;
 
+      case CREATE_DURABLE_QUEUE:
+      case CREATE_NON_DURABLE_QUEUE:
       case CONSUME:
         return addr.canRecv(user, address) ? user : null;
 
       default:
+        log.warn("Block {}", checkType);
         return null;
     }
   }

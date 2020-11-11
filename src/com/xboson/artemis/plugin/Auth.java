@@ -13,6 +13,7 @@ public class Auth implements IConst {
 
   private static final Base64.Decoder b64d = Base64.getDecoder();
   private static final int PASS_BIND_TIME = 24 * 3600;
+
   private MongoCollection<Document> user;
   private MongoCollection<Document> passsafe;
 
@@ -74,7 +75,7 @@ public class Auth implements IConst {
 
 
   private void bind_safe_password(String un, String inpass, String bind) {
-    Document doc = new Document("_id", un + inpass);
+    Document doc = createDoc(un, inpass);
     doc.put("crt", new Date());
     doc.put("bind", bind);
     passsafe.insertOne(doc);
@@ -82,7 +83,7 @@ public class Auth implements IConst {
 
 
   private PassState is_safe_password(String un, String inpass, String bind) {
-    Document doc = new Document("_id", un + inpass);
+    Document doc = createDoc(un, inpass);
     doc = passsafe.find(doc).first();
     if (doc == null) {
       return PassState.SAFE;
@@ -91,6 +92,11 @@ public class Auth implements IConst {
       return PassState.BINDED;
     }
     return PassState.UNSAFE;
+  }
+
+
+  private Document createDoc(String un, String ps) {
+    return new Document("_id", un +" "+ ps);
   }
 
 
