@@ -31,7 +31,7 @@ public class Security implements ActiveMQSecurityManager4 {
 
   @Override
   public boolean validateUser(String user, String password) {
-    return auth.check(user, password);
+    throw new RuntimeException("not support");
   }
 
 
@@ -40,16 +40,17 @@ public class Security implements ActiveMQSecurityManager4 {
                                      String password,
                                      Set<Role> roles,
                                      CheckType checkType) {
-    return false;
+    throw new RuntimeException("not support");
   }
 
 
   @Override
   public String validateUser(String user,
                              String password,
-                             RemotingConnection remotingConnection,
+                             RemotingConnection conn,
                              String securityDomain) {
-    if (validateUser(user, password)) return user;
+    if (auth.check(user, password, getBind(conn)))
+      return user;
     return null;
   }
 
@@ -72,5 +73,16 @@ public class Security implements ActiveMQSecurityManager4 {
       default:
         return null;
     }
+  }
+
+
+  private String getBind(RemotingConnection conn) {
+    // 删掉端口
+    String b = conn.getRemoteAddress();
+    String[] r = b.split(":", 2);
+    if (r.length > 1) {
+      return r[0];
+    }
+    return b;
   }
 }

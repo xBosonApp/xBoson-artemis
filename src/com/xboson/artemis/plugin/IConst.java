@@ -7,5 +7,6 @@ interface IConst {
 
   String TabUser = "user";
   String TabAddr = "address";
+  String TabPasssafe = "passsafe";
 
 }

@@ -17,6 +17,7 @@ def jar_name = 'xboson-plugin-artemis'
 buildscript {
     dependencies {
         classpath files("./build/classes/java/main")
+        classpath files("./out/production/xboson-artemis")
     }
 }
 
