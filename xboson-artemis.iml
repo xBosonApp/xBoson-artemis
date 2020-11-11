@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="artemis-amqp-protocol-2.15.0" level="project" />
+    <orderEntry type="library" name="lib" level="project" />
   </component>
 </module>

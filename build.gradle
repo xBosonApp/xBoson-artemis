@@ -11,9 +11,13 @@ apply plugin: 'java'
 defaultTasks 'plugin'
 
 def local_artemis = 'D:/_dev_runtime/apache-artemis-2.15.0/lib'
+def jar_name = 'xboson-plugin-artemis'
 
 
 buildscript {
+    dependencies {
+        classpath files("./build/classes/java/main")
+    }
 }
 
 
@@ -26,6 +30,7 @@ repositories {
 
 
 dependencies {
+    // 不能依赖 artemis-server 防止考入 jar
     compile group: 'org.mongodb', name: 'mongo-java-driver', version: '3.6.4'
 }
 
@@ -48,9 +53,9 @@ tasks.withType(JavaCompile) {
 def newMani() {
     manifest {
         attributes 'Created-By': 'J.ym'
-        attributes 'Specification-Title': 'xBoson PAAS'
+        attributes 'Specification-Title': 'xBoson Artemis plugin'
         attributes 'Specification-Vendor': '上海竹呗信息技术有限公司'
-        //attributes 'Specification-Version': com.xboson.artemis.plugin.Version
+        attributes 'Specification-Version': com.xboson.artemis.plugin.Version.Name
     }
 }
 
@@ -61,22 +66,28 @@ task downloadJars(type: Copy) {
 }
 
 
-task plugin(type: Jar) {
-    from ('build/classes')
-    destinationDir = file('./lib')
-    archiveName = 'xboson-plugin-artemis.jar'
-
-    def classpath = '. ' + archiveName
-    fileTree('./bin/lib').matching { include "*.jar" }.collect {
-        classpath = classpath +' lib/'+ it.name
-    }
-    // println 'classpath: '+ classpath
-
-    manifest = newMani()
-    manifest {
-        attributes 'Class-Path': classpath
+task deleteOldJar(type: Delete) {
+    delete fileTree('lib') {
+        include jar_name +'*.jar'
     }
 }
 
+
+task plugin(type: Jar) {
+    from sourceSets.main.output.classesDirs
+    destinationDir = file('./lib')
+    // archiveName = 'xboson-plugin-artemis.jar'
+    baseName = jar_name
+    version = com.xboson.artemis.plugin.Version.Ver
+
+    manifest = newMani()
+    manifest {
+        attributes 'Class-Path': configurations.compile.collect {
+            it.getName() }.join(' ')
+    }
+}
+
+
+compileJava.dependsOn deleteOldJar
 downloadJars.dependsOn compileJava
 plugin.dependsOn downloadJars
