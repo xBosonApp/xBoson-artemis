@@ -1,0 +1,82 @@
+/**
+ * 有以下 gradle 任务可执行:
+ * 1. `war` (默认): 混淆打包 servlet 应用, 输出在 build/lib
+ * 2. `app`: 混淆打包 java 独立应用, 输出在 bin
+ *
+ * 参考:
+ * https://www.guardsquare.com/en/products/proguard/manual/gradle
+ * https://docs.gradle.org/current/dsl
+ */
+apply plugin: 'java'
+defaultTasks 'plugin'
+
+def local_artemis = 'D:/_dev_runtime/apache-artemis-2.15.0/lib'
+
+
+buildscript {
+}
+
+
+repositories {
+    mavenCentral()
+    jcenter()
+    gradlePluginPortal()
+    google()
+}
+
+
+dependencies {
+    compile group: 'org.mongodb', name: 'mongo-java-driver', version: '3.6.4'
+}
+
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+        }
+        compileClasspath = fileTree('lib/') + fileTree(local_artemis)
+    }
+}
+
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+
+def newMani() {
+    manifest {
+        attributes 'Created-By': 'J.ym'
+        attributes 'Specification-Title': 'xBoson PAAS'
+        attributes 'Specification-Vendor': '上海竹呗信息技术有限公司'
+        //attributes 'Specification-Version': com.xboson.artemis.plugin.Version
+    }
+}
+
+
+task downloadJars(type: Copy) {
+  from configurations.runtime
+  into 'lib'
+}
+
+
+task plugin(type: Jar) {
+    from ('build/classes')
+    destinationDir = file('./lib')
+    archiveName = 'xboson-plugin-artemis.jar'
+
+    def classpath = '. ' + archiveName
+    fileTree('./bin/lib').matching { include "*.jar" }.collect {
+        classpath = classpath +' lib/'+ it.name
+    }
+    // println 'classpath: '+ classpath
+
+    manifest = newMani()
+    manifest {
+        attributes 'Class-Path': classpath
+    }
+}
+
+downloadJars.dependsOn compileJava
+plugin.dependsOn downloadJars
