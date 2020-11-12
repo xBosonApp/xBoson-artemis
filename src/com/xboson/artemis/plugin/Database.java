@@ -10,6 +10,8 @@ import java.util.Map;
 public class Database implements IConst {
 
   private MongoClient cli;
+  private MongoDatabase mdb;
+
   public final String db_name;
   public final String host;
 
@@ -23,11 +25,12 @@ public class Database implements IConst {
     }
     this.db_name = db_name;
     this.host = uri.getHosts().toString();
+    this.mdb = cli.getDatabase(db_name);
   }
 
 
   public MongoDatabase open() {
-    return cli.getDatabase(db_name);
+    return mdb;
   }
 
 

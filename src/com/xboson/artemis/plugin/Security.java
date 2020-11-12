@@ -73,6 +73,10 @@ public class Security implements ActiveMQSecurityManager4 {
       case CONSUME:
         return addr.canRecv(user, address) ? user : null;
 
+      case DELETE_DURABLE_QUEUE:
+      case DELETE_NON_DURABLE_QUEUE:
+        return user;
+
       default:
         log.warn("Block {}", checkType);
         return null;
