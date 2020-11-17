@@ -4,9 +4,12 @@ package com.xboson.artemis.plugin;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.UpdateOptions;
 import org.apache.activemq.artemis.api.core.SimpleString;
+import org.bson.BsonArray;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Date;
 
 
 public class Device implements IConst {
@@ -31,15 +34,20 @@ public class Device implements IConst {
 
     String dev_id = info.devicePrefix();
     Document where = new Document("_id", dev_id);
+    long now = System.currentTimeMillis();
+
+    Document meta = new Document();
 
     Document set = new Document();
     set.put("devid", info.dev);
     set.put("product", info.prod);
     set.put("scenes", info.scene);
-    set.put("state", "");
+    set.put("state", "auto created");
     set.put("dc", 0);
     set.put("dd", 0);
-    set.put("meta", new Document());
+    set.put("cd", new Date());
+    set.put("md", new Date());
+    set.put("meta", meta);
 
     Document doc = new Document();
     doc.put("$setOnInsert", set);
