@@ -107,11 +107,12 @@ mqtt 参数:
     "_id"     : "格式: '.场景id.产品id', 该格式来自 fmt 的转换",
     "scenes"  : "场景id",
     "pid"     : "产品id",
+    "name"    : "产品名称",
+    "desc"    : "产品描述",
     
-    desc(string)   : "说明",
     cd(time)       : 创建时间
     md(time)       : 修改时间
-    script(string) : '脚本, 用于处理虚拟数据, 有接口标准'
+    script(string) : '脚本ID, 用于处理虚拟数据, 有接口标准'
   
     "meta" : [ // 属性信息列表
       { name     : '属性名'
@@ -120,8 +121,6 @@ mqtt 参数:
         notnull  : bool 不能空 
         defval   : '默认值'
         dict     : '只在字典类型时有效'
-        max      : 最大值
-        min      : 最小值
       }
     ],
   
@@ -129,6 +128,7 @@ mqtt 参数:
       { name     : '数据名'
         desc     : '说明'
         type     : DevDataType '数据类型'
+        unit     : '计量单位'
       }
     ],
     
@@ -146,8 +146,18 @@ mqtt 参数:
     "share" : ["共享用户名列表"], (索引)
     "name"  : "场景名", (索引)
     "desc"  : "详细说明",
-    cd(time)       : 创建时间
-    md(time)       : 修改时间
+    cd(time)  : 创建时间
+    md(time)  : 修改时间
+  },
+  
+  "script" : {
+    _id   : 脚本名
+    desc  : 说明
+    owner : 归属, 平台用户名   (索引)
+    share : ["共享用户名列表"] (索引)
+    code  : 脚本, 加密
+    cd(time)  : 创建时间
+    md(time)  : 修改时间
   },
   
   "dev-data" : {
@@ -225,3 +235,11 @@ mqtt 参数:
 * DAT_number    DevAttrType = 101 // 数字
 * DAT_dict      DevAttrType = 102 // 字典
 * DAT_date      DevAttrType = 103
+
+数据类型 DevDataType:
+
+* DDT_int       DevDataType = 1 // 整数类型
+* DDT_float     DevDataType = 2 // 浮点类型
+* DDT_virtual   DevDataType = 3 // 虚拟数据
+* DDT_sw        DevDataType = 4 // 开关类型
+* DDT_string    DevDataType = 5

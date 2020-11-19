@@ -34,7 +34,7 @@ public class Device implements IConst {
 
     String dev_id = info.devicePrefix();
     Document where = new Document("_id", dev_id);
-    long now = System.currentTimeMillis();
+    Date now = new Date();
 
     Document meta = new Document();
 
@@ -45,8 +45,8 @@ public class Device implements IConst {
     set.put("state", "auto created");
     set.put("dc", 0);
     set.put("dd", 0);
-    set.put("cd", new Date());
-    set.put("md", new Date());
+    set.put("cd", now);
+    set.put("md", now);
     set.put("meta", meta);
 
     Document doc = new Document();
