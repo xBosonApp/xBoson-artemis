@@ -1,6 +1,6 @@
 # Artemis 与 xBoson 系统集成
 
-https://activemq.apache.org/components/artemis/documentation/latest/mqtt.html
+Artemis 插件; 制定一个设备接入规则, 对设备进行登录认证, 把数据传入 xBoson平台运算核心. 
 
 
 # 构建
@@ -32,6 +32,11 @@ https://activemq.apache.org/components/artemis/documentation/latest/mqtt.html
 
 > 如果 MongoDBurl 中没有明确指定数据库则使用默认数据库.
 
+> mqtt 默认规则: MULTICAST 模式相同 clientid 登录, 前一个客户端被踢掉; 
+  不同 clientid 连接同一个地址生成自己的队列, 都会接收到同一条消息(连接到自己的队列上);
+  ANYCAST 模式任何不同 clientid 客户端连接到同一个队列, 分配消息;
+  
+
 
 # iot 设计:
 
@@ -45,9 +50,82 @@ mqtt 主题前缀:
   * /save  平台接收, json 格式, 平台保存的数据
   
 > 消费者可用 '+' 通配符匹配产品下的所有设备.
+  只有消费者和生产者使用 QoS1 时, 才能保留离线消息.
+
+## data 设备数据主题格式
+
+该主题由设备推送, 由设备定义数据格式; 由 SAAS 应用或 PAAS 脚本订阅,
+数据接收后必须对数据进行解析, 解析后的数据推送到 save 主题中进行保存;
+SAAS应用可在数据处理期间产生控制命令或事件.
+
+如果设备可以直接推送 json 格式, 则可以掠过 data 主题, 将数据直接推送
+到 save 主题中.
+
+发送到该主题的数据不算做设备数据, 只有推送到 save 中才算做设备数据.
+
+
+## save 保存数据主题格式
+
+通常由 SAAS 应用或 PAAS 产品处理脚本发送, 发送的数据会被 PAAS 平台处理保存;
+也可以由设备直接推送.
+
+必须是 JSON 数据格式, 字段与类型必须和 `产品` 定义中的 `数据列表` 匹配.
+当消息中的字段没有在 `数据列表` 中定义, 该数据不会被保存.
+
+```
+{
+  time  数据发送时间, UNIX 时间
+  data  {
+    数据, 与 `产品` 定义中的 `数据列表` 匹配
+  } 
+}
+```
+
+## state 状态主题
+
+一条可阅读的字符串, 该主题用于更新设备状态, 状态不保留历史, 设备仅保存最新状态.
+
+
+## event 事件主题格式
+
+该主题由 SAAS 应用或 PAAS 产品处理脚本发送, PAAS 平台订阅,
+事件历史会被保留, 并等待用户处理.
+
+JSON 数据格式, 必须包含的固定字段, 规则如下:
+
+```
+{
+  code  消息代码
+  msg   可阅读的信息文本
+  cd    消息发送的时间, 自1970开始的毫秒, UNIX 时间 (消息在 mqtt 中中转会有延迟)
+  level 消息级别, 定义在字典 `IOT.001` / `EVENT_LEVEL` 中 参考: 
+        1. 调试消息可忽略 
+        2. 普通消息 
+        3. 警告, 可能需要进行处理
+        4. 一般损害, 应立即处理
+        5. 严重损害, 设施即将失去功能
+        6. 严重损害, 有可能造成人员伤亡
+        7. 非常严重损害, 自然灾害, 应动员全部资源进行处理
+  data  {
+    消息数据, 可定义任意字段, 字段会被 `产品/消息字典解读`
+  }
+}
+```
+
+## cmd 命令主题格式
+
+该主题由 SAAS 应用或 PAAS 产品处理脚本发送, 由设备订阅,
+设备收到命令后进行对应的处理, 格式为设备可理解的自定义格式,
+
+在平台上定义的 JSON 命令格式在经过 SAAS 应用或 PAAS 产品处理脚本后将被转换为
+对应的命令格式.
+
+只有 PAAS 产品脚本发送的命令产生历史记录, SAAS应用发送的命令数据没有历史记录.
 
   
-mqtt 参数:
+## mqtt 
+
+登录:
  
 * 用户名: 设备用户 - 为一种设备创建一个访问用户
 * 密码: 加密算法(密钥)
@@ -100,7 +178,35 @@ mqtt 参数:
     "_id" : ". 分割的地址, 格式: '.场景id.产品id', 该格式来自 fmt 的转换",
     "fmt" : "/ 分割的地址, 原始 mqtt 地址",
     "send": {"可发送数据用户" : 1}, 
-    "recv": {"可接受数据用户" : 1}
+    "recv": {"可接受数据用户" : 1},
+    
+    auto_restart : boolean 随系统自动启动
+    auto_auth : string 自动启动使用的平台账户
+    
+    data : data 主题 {
+      count : '线程数',
+      user  : '登录用户',
+      script: '处理脚本',
+      qos   : 0 数据质量,
+    }
+    
+    state : {
+      count : 0,
+      user  : '登录用户',
+      qos   : 0,
+    }
+    
+    event : {
+      count : 0,
+      user  : '登录用户',
+      qos   : 0,
+    }
+    
+    save : {
+      count  : 1,
+      user   : "登录用户",
+      qos   : 0,
+    }
   },
   
   "product" : {
@@ -110,9 +216,8 @@ mqtt 参数:
     "name"    : "产品名称",
     "desc"    : "产品描述",
     
-    cd(time)       : 创建时间
-    md(time)       : 修改时间
-    script(string) : '脚本ID, 用于处理虚拟数据, 有接口标准'
+    cd(time)  : 创建时间
+    md(time)  : 修改时间
   
     "meta" : [ // 属性信息列表
       { name     : '属性名'
@@ -137,7 +242,11 @@ mqtt 参数:
         desc : '说明'
         type : DevDataType
       }
-    ]
+    ],
+    
+    "event" : 事件字典 {
+      事件字典 : 对应的说明
+    }
   },
   
   "scenes" : {
@@ -163,7 +272,7 @@ mqtt 参数:
   "dev-data" : {
     所有年份数据:  {
       _id : !yr~[device-id]$[data-name] (数据名)
-      dev : 设备ID - 需要索引
+      dev : 设备ID - (索引)
       l : 最后插入的数据
       v : (数据 map) {
         Y : n年数据, (数字类型)
@@ -225,11 +334,36 @@ mqtt 参数:
         59: 59秒数据
       }
     }
+  },
+  
+  cmd_his : {
+    _id     : mongo 自动生成
+    devid   : 设备完整id (索引)
+    scenes  : "场景id", (索引)
+    product : "产品id", (索引)
+    cd      : 命令生成时间
+    data    : {} 命令的数据
+    payload : 发送的原始数据
+  }
+  
+  event_his : {
+    _id     : mongo 自动生成
+    msg     : 事件文本
+    code    : 消息代码
+    devid   : 设备完整id (索引)
+    product : "产品id", (索引)
+    scenes  : "场景id", (索引)
+    cd      : 事件生成时间
+    level   : 事件级别
+    repwho  : 对事件进行响应的用户
+    repmsg  : 响应事件的对策文本
+    reptime : 响应时间
+    data    : {} 事件数据
   }
 }
 ```
 
-数据类型 DevDataType:
+数据类型 DevAttrType:
 
 * DAT_string    DevAttrType = 100 // 字符串
 * DAT_number    DevAttrType = 101 // 数字
@@ -243,3 +377,9 @@ mqtt 参数:
 * DDT_virtual   DevDataType = 3 // 虚拟数据
 * DDT_sw        DevDataType = 4 // 开关类型
 * DDT_string    DevDataType = 5
+
+# 其他
+
+* [xBoson平台运算核心](https://github.com/yanmingsohu/xBoson-core)
+* [MQTT 标准](https://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html)
+* [artemis 文档](https://activemq.apache.org/components/artemis/documentation/latest/mqtt.html)
