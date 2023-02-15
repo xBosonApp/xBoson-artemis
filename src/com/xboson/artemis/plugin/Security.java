@@ -75,6 +75,7 @@ public class Security implements ActiveMQSecurityManager4 {
 
       case DELETE_DURABLE_QUEUE:
       case DELETE_NON_DURABLE_QUEUE:
+      case DELETE_ADDRESS:
         return user;
 
       default:

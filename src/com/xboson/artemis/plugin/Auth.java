@@ -3,6 +3,7 @@ package com.xboson.artemis.plugin;
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -52,9 +53,14 @@ public class Auth implements IConst {
 
     byte[] b = b64d.decode(inpass);
     MessageDigest md = md5();
-    md.update(b, 0, 16);
-    md.update(un.getBytes());
-    md.update(realps.getBytes());
+
+    try {
+      md.update(b, 0, 16);
+      md.update(un.getBytes(CHARSET_NAME));
+      md.update(realps.getBytes(CHARSET_NAME));
+    } catch(UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
 
     byte[] ck = md.digest();
     if (ck.length != b.length - 16) {

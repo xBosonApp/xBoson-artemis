@@ -10,4 +10,5 @@ interface IConst {
   String TabPasssafe = "passsafe";
   String TabDev = "device";
 
+  String CHARSET_NAME = "UTF-8";
 }
